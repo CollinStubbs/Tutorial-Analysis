@@ -30,7 +30,7 @@ function findData(name, subject, responses){
   var seperatedData = seperateSubjects(nameData);
   //var subjectData = findSubjectData(subject, seperatedData);
   for(var i = 0; i<seperatedData.length; i++){
-  console.log(seperatedData[i]);
+    console.log(seperatedData[i]);
   }
 }
 
@@ -54,31 +54,18 @@ function findSubjectData(subject, data){
 
 function seperateSubjects(data){
   var l = data.length;
- var arHolder = [];
+  var arHolder = [];
   var arSplice = [];
   for(var i = 0; i<l; i++){
     if(data[i][3].indexOf(',') > -1){
       var holder = data[i][3].split(',');
-      var rowHolder = data[i];
+      var rowHolder = data[i].slice();
       
-      var rowHolder2 = data[i];
       rowHolder[3] = holder[0];
-      rowHolder2[3] = holder[1];
+      data[i][3] = holder[1];
       
-      arHolder.push(rowHolder);
-      arHolder.push(rowHolder2);
-      arSplice.push(i);
+      data.push(rowHolder);
     }
   }
-  
-  for(var i = 0; i<arSplice.length; i++){
-    if(arSplice[i]!=0){
-     // data.splice(arSplice[i]-i);
-    }
-  }
-  for(var i = 0; i<arHolder.length; i++){
-   data.push(arHolder[i]); 
-  }
-  
   return data;
 }
