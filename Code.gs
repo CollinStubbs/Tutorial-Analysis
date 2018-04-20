@@ -6,16 +6,47 @@ function onOpen() {
 }
 
 function start(){
-  var url = "https://docs.google.com/spreadsheets/d/18LfUbCKU0HTdzJ4i4iv5r8hnNy-wvg0jMKLsabzWrbo/edit#gid=1612432561";
+  var url = "https://docs.google.com/spreadsheets/d/18LfUbCKU0HTdzJ4i4iv5r8hnNy-wvg0jMKLsabzWrbo/edit#gid=1612432561"; //change this to be read by sheet
   var ss = SpreadsheetApp.openByUrl(url); 
   var data = SpreadsheetApp.getActive().getSheetByName('data');
+  data.getRange(1, 4, 100, 13).clearContent();
   var sheetName = data.getRange(2,1).getValue();
   var studentName = standardName(data.getRange(5, 1).getValue());
   var subject = data.getRange(8,1).getValue();//ACCEPT MULTIPLE INPUTS AND PLAN FOR LOOPING OUTPUT
   var responses = ss.getSheetByName(sheetName).getDataRange().getValues();
+  var titles = ss.getSheetByName(sheetName).getRange(1, 1, 1, 7).getValues();
+  var parsedData = [];
   
-  findData(studentName, subject, responses);
+  if(subject.indexOf(",") >-1){
+    var subjects = subject.split(",");
+    for(var i = 0; i<subjects.length; i++){
+      if(studentName == ""){  
+        parsedData.concat(findSubjectData(subjects[i].trim(), responses)); 
+      }
+      else{
+        parsedData.concat(findData(studentName, subjects[i].trim(), responses)); 
+        
+      }
+    }
+  }
+  else{
+    if(studentName == ""){  
+      parsedData = findSubjectData(subject, responses); 
+    }
+    else{
+      parsedData = findData(studentName, subject, responses); 
+      
+    }
+  }
   
+  
+  if(parsedData == ""){
+    data.getRange(2,4).setValue("No data matches those criteria.");
+  }
+  else{
+    data.getRange(1, 4, 1, 7).setValues(titles);
+    data.getRange(2, 4, parsedData.length, parsedData[0].length).setValues(parsedData);
+  }
   
 }
 
@@ -25,13 +56,20 @@ function standardName(name){
   return name;
 }
 
+
+
 function findData(name, subject, responses){
-  var nameData = findNameData(name, responses); 
-  var seperatedData = seperateSubjects(nameData);
-  //var subjectData = findSubjectData(subject, seperatedData);
-  for(var i = 0; i<seperatedData.length; i++){
-    console.log(seperatedData[i]);
+  var finalData = 0;
+  if(subject == ""){
+    finalData = findNameData(name, responses);
+    
   }
+  else{
+    var nameData = findNameData(name, responses); 
+    finalData = findSubjectData(subject, nameData);
+   
+  }
+  return finalData;
 }
 
 function findNameData(name, responses){
@@ -48,24 +86,14 @@ function findNameData(name, responses){
 function findSubjectData(subject, data){
   var subjectData = [];
   for(var i = 0; i<data.length; i++){
-    
-  }
-}
-
-function seperateSubjects(data){
-  var l = data.length;
-  var arHolder = [];
-  var arSplice = [];
-  for(var i = 0; i<l; i++){
-    if(data[i][3].indexOf(',') > -1){
-      var holder = data[i][3].split(',');
-      var rowHolder = data[i].slice();
-      
-      rowHolder[3] = holder[0];
-      data[i][3] = holder[1];
-      
-      data.push(rowHolder);
+    for(var j = 0; j<data[i].length; j++){
+      if(data[i][j].toString().indexOf(subject) >(-1) && j != 1 && j != 4 && j != 5){
+        //console.log("1");
+        subjectData.push(data[i].concat());       
+    }
     }
   }
-  return data;
+  return subjectData;
 }
+
+
