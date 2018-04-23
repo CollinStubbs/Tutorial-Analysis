@@ -16,7 +16,7 @@ function start(){
   var subject = data.getRange(8,1).getDisplayValue();//ACCEPT MULTIPLE INPUTS AND PLAN FOR LOOPING OUTPUT
   sDate = new Date(data.getRange(11, 1).getDisplayValue());
   eDate = new Date(data.getRange(14, 1).getDisplayValue());
-  var responses = ss.getSheetByName(sheetName).getDataRange().getDisplayValues();
+  var responses = ss.getSheetByName(sheetName).getDataRange().getDisplayValues().splice(1);
   var titles = ss.getSheetByName(sheetName).getRange(1, 1, 1, responses[0].length).getDisplayValues();
   var parsedData = 0;
   
@@ -40,7 +40,7 @@ function start(){
   }
   else{
     if(studentName == ""){  
-      parsedData = findSubjectData(subject, responses.splice(1)); 
+      parsedData = findSubjectData(subject, responses); 
     }
     else{
       parsedData = findData(studentName, subject, responses); 
@@ -72,7 +72,20 @@ function checkDateRange(curDate){
   }
   return check;
 }
-
+function checkNoStart(curDate){
+  var check = false;
+  if(curDate <= eDate && sDate == ""){
+    check = true;
+  }
+  return check;
+}
+function checkNoEnd(curDate){
+  var check = false;
+  if(curDate >= sDate && eDate == ""){
+    check = true;
+  }
+  return check;
+}
 
 function findData(name, subject, responses){
   var finalData = 0;
@@ -88,12 +101,24 @@ function findData(name, subject, responses){
   return finalData;
 }
 
+//GO THROUGH LOGIC OF DATE RANGES, YOU BROKE IT SOMEHOW
+
 function findNameData(name, responses){
   var nameData = [];
   for(var i = 0; i< responses.length; i++){
     var holderName = standardName(responses[i][1]);
-    if(name == holderName && checkDateRange(new Date(responses[i][0]))){
+    
+    if(name == holderName && sDate == "" && checkNoStart(new Date(responses[i][0]))){
       nameData.push(responses[i]);
+    }
+    else if(name == holderName && eDate == "" && checkNoEnd(new Date(responses[i][0]))){
+      nameData.push(responses[i]);
+    }
+    else if(name == holderName && checkDateRange(new Date(responses[i][0]))){
+      nameData.push(responses[i]);
+    }
+    else if(name == holderName){
+      nameData.push(responses[i]); 
     }
   }
   return nameData;
@@ -107,8 +132,15 @@ function findSubjectData(subject, data){
     for(var i = 0; i<data.length; i++){
       for(var j = 0; j<data[i].length; j++){
         if(data[i][j].toString().indexOf(subject) >(-1) && j != 1 && j != 4 && j != 5){
-          if(checkDateRange(new Date(data[i][0]))){
+          if(sDate == "" && checkNoStart(new Date(data[i][0]))){
+            subjectData.push(data[i].concat()); 
+          }else if(eDate == "" && checkNoEnd(new Date(data[i][0]))){
+            subjectData.push(data[i].concat()); 
+          }else if(checkDateRange(new Date(data[i][0]))){
             subjectData.push(data[i].concat());       
+          }
+          else{
+            subjectData.push(data[i].concat());        
           }
         }
       }
