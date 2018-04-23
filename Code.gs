@@ -4,7 +4,7 @@ function onOpen() {
   .addItem('Analyze Tutorials', 'start')
   .addToUi();
 }
-var sDate = 0;
+var sDate = 0;// do if these are blank
 var eDate = 0;
 function start(){
   var url = "https://docs.google.com/spreadsheets/d/18LfUbCKU0HTdzJ4i4iv5r8hnNy-wvg0jMKLsabzWrbo/edit#gid=1612432561"; //change this to be read by sheet
@@ -17,7 +17,7 @@ function start(){
   sDate = new Date(data.getRange(11, 1).getDisplayValue());
   eDate = new Date(data.getRange(14, 1).getDisplayValue());
   var responses = ss.getSheetByName(sheetName).getDataRange().getDisplayValues();
-  var titles = ss.getSheetByName(sheetName).getRange(1, 1, 1, 7).getDisplayValues();
+  var titles = ss.getSheetByName(sheetName).getRange(1, 1, 1, responses[0].length).getDisplayValues();
   var parsedData = 0;
   
   if(subject.indexOf(",") >-1){
@@ -40,7 +40,7 @@ function start(){
   }
   else{
     if(studentName == ""){  
-      parsedData = findSubjectData(subject, responses); 
+      parsedData = findSubjectData(subject, responses.splice(1)); 
     }
     else{
       parsedData = findData(studentName, subject, responses); 
@@ -65,9 +65,9 @@ function standardName(name){
   return name;
 }
 
-function checkDateRange(curDate, startDate, endDate){
+function checkDateRange(curDate){
   var check = false;
-  if(curDate >= startDate && curDate <= endDate){
+  if(curDate >= sDate && curDate <= eDate){
     check = true;
   }
   return check;
@@ -83,7 +83,7 @@ function findData(name, subject, responses){
   else{
     var nameData = findNameData(name, responses); 
     finalData = findSubjectData(subject, nameData);
-   
+    
   }
   return finalData;
 }
@@ -92,7 +92,7 @@ function findNameData(name, responses){
   var nameData = [];
   for(var i = 0; i< responses.length; i++){
     var holderName = standardName(responses[i][1]);
-    if(name == holderName){
+    if(name == holderName && checkDateRange(new Date(responses[i][0]))){
       nameData.push(responses[i]);
     }
   }
@@ -101,12 +101,17 @@ function findNameData(name, responses){
 
 function findSubjectData(subject, data){
   var subjectData = [];
-  for(var i = 0; i<data.length; i++){
-    for(var j = 0; j<data[i].length; j++){
-      if(data[i][j].toString().indexOf(subject) >(-1) && j != 1 && j != 4 && j != 5){
-        //console.log("1");
-        subjectData.push(data[i].concat());       
-    }
+  if(subject == ""){
+    subjectData = data;
+  }else{
+    for(var i = 0; i<data.length; i++){
+      for(var j = 0; j<data[i].length; j++){
+        if(data[i][j].toString().indexOf(subject) >(-1) && j != 1 && j != 4 && j != 5){
+          if(checkDateRange(new Date(data[i][0]))){
+            subjectData.push(data[i].concat());       
+          }
+        }
+      }
     }
   }
   return subjectData;
