@@ -4,28 +4,37 @@ function onOpen() {
   .addItem('Analyze Tutorials', 'start')
   .addToUi();
 }
-
+var sDate = 0;
+var eDate = 0;
 function start(){
   var url = "https://docs.google.com/spreadsheets/d/18LfUbCKU0HTdzJ4i4iv5r8hnNy-wvg0jMKLsabzWrbo/edit#gid=1612432561"; //change this to be read by sheet
   var ss = SpreadsheetApp.openByUrl(url); 
   var data = SpreadsheetApp.getActive().getSheetByName('data');
-  data.getRange(1, 4, 100, 13).clearContent();
-  var sheetName = data.getRange(2,1).getValue();
-  var studentName = standardName(data.getRange(5, 1).getValue());
-  var subject = data.getRange(8,1).getValue();//ACCEPT MULTIPLE INPUTS AND PLAN FOR LOOPING OUTPUT
-  var responses = ss.getSheetByName(sheetName).getDataRange().getValues();
-  var titles = ss.getSheetByName(sheetName).getRange(1, 1, 1, 7).getValues();
-  var parsedData = [];
+  data.getRange(1, 4, 1128, 13).clearContent();
+  var sheetName = data.getRange(2,1).getDisplayValue();
+  var studentName = standardName(data.getRange(5, 1).getDisplayValue());
+  var subject = data.getRange(8,1).getDisplayValue();//ACCEPT MULTIPLE INPUTS AND PLAN FOR LOOPING OUTPUT
+  sDate = new Date(data.getRange(11, 1).getDisplayValue());
+  eDate = new Date(data.getRange(14, 1).getDisplayValue());
+  var responses = ss.getSheetByName(sheetName).getDataRange().getDisplayValues();
+  var titles = ss.getSheetByName(sheetName).getRange(1, 1, 1, 7).getDisplayValues();
+  var parsedData = 0;
   
   if(subject.indexOf(",") >-1){
+    parsedData = [];
     var subjects = subject.split(",");
     for(var i = 0; i<subjects.length; i++){
       if(studentName == ""){  
-        parsedData.concat(findSubjectData(subjects[i].trim(), responses)); 
+        var sD = findSubjectData(subjects[i].trim(), responses); 
+        for(var j = 0; j<sD.length; j++){
+          parsedData.push(sD[j]);
+        }
       }
       else{
-        parsedData.concat(findData(studentName, subjects[i].trim(), responses)); 
-        
+        var sD = findData(studentName, subjects[i].trim(), responses); 
+        for(var j = 0; j<sD.length; j++){
+          parsedData.push(sD[j]);
+        }
       }
     }
   }
@@ -56,6 +65,13 @@ function standardName(name){
   return name;
 }
 
+function checkDateRange(curDate, startDate, endDate){
+  var check = false;
+  if(curDate >= startDate && curDate <= endDate){
+    check = true;
+  }
+  return check;
+}
 
 
 function findData(name, subject, responses){
