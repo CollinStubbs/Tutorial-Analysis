@@ -6,23 +6,31 @@ function onOpen() {
 }
 var sDate = 0;// do if these are blank
 var eDate = 0;
+var grade = 0;
 function start(){
-  var url = "https://docs.google.com/spreadsheets/d/18LfUbCKU0HTdzJ4i4iv5r8hnNy-wvg0jMKLsabzWrbo/edit#gid=1612432561"; //change this to be read by sheet
-  var ss = SpreadsheetApp.openByUrl(url); 
+  
+  var sheetData = SpreadsheetApp.getActive().getSheetByName("tutorials");
+  var url = sheetData.getRange(2, 1).getDisplayValue(); //change this to be read by sheet
+  var sheetName = sheetData.getRange(5,1).getDisplayValue();
+  var ss = SpreadsheetApp.openByUrl(url);
   var data = SpreadsheetApp.getActive().getSheetByName('data');
   data.getRange(1, 4, 1128, 13).clearContent();
-  var sheetName = data.getRange(2,1).getDisplayValue();
-  var studentName = (data.getRange(5,1).isBlank() ? "0" : standardName(data.getRange(5, 1).getDisplayValue()));
-  var subject = (data.getRange(8,1).isBlank() ? "0" : data.getRange(8,1).getValue());
-  sDate = data.getRange(11, 1).getDisplayValue();
-  eDate = data.getRange(14, 1).getDisplayValue();
+  
+  var studentName = (data.getRange(2,1).isBlank() ? "0" : standardName(data.getRange(2, 1).getDisplayValue()));
+  var subject = (data.getRange(5,1).isBlank() ? "0" : data.getRange(5,1).getValue());
+  
+  grade = (data.getRange(14,1).isBlank() ? "0" : data.getRange(14,1).getValue());
+  sDate = (data.getRange(8,1).isBlank() ? "0" : data.getRange(8,1).getValue());
+  eDate = (data.getRange(11,1).isBlank() ? "0" : data.getRange(11,1).getValue());
   
   if(sDate != "" && sDate != 0){
+    
+    
     sDate = new Date(sDate);
     sDate.setHours(0,0,0,0);
   }
   
-  if(eDate != "" && eDate != 0){
+  if(eDate != "0" && eDate != 0){
     eDate = new Date(eDate); 
     eDate.setHours(24,0,0,0);
   }
@@ -58,7 +66,7 @@ function start(){
       
     }
   }
-  
+  parsedData = findGradeData(parsedData);
   
   if(parsedData == ""){
     data.getRange(2,4).setValue("No data matches those criteria.");
@@ -85,15 +93,14 @@ function checkDateRange(curDate){
 }
 function checkNoStart(curDate){
   var check = false;
-  console.log(curDate, eDate);
-  if(curDate <= eDate && sDate == ""){
+  if(curDate <= eDate && sDate == "0"){
     check = true;
   }
   return check;
 }
 function checkNoEnd(curDate){
   var check = false;
-  if(curDate >= sDate && eDate == ""){
+  if(curDate >= sDate && eDate == "0"){
     check = true;
   }
   return check;
@@ -102,15 +109,32 @@ function checkNoEnd(curDate){
 function findData(name, subject, responses){
   var finalData = 0;
   if(subject == "0"){
-    finalData = findNameData(name, responses);
     
+    finalData = findNameData(name, responses);
   }
   else{
     var nameData = findNameData(name, responses); 
+    
     finalData = findSubjectData(subject, nameData);
+    
     
   }
   return finalData;
+}
+
+function findGradeData(responses){
+  if(grade == "0" || grade == 0){
+    return responses;
+  }else{
+    
+    var gradeData = [];
+    for(var i = 0; i< responses.length; i++){  
+      if(grade == responses[i][2] ){
+        gradeData.push(responses[i]);
+      }
+    }
+    return gradeData;
+  }
 }
 
 //GO THROUGH LOGIC OF DATE RANGES, YOU BROKE IT SOMEHOW
@@ -119,20 +143,25 @@ function findNameData(name, responses){
   var nameData = [];
   for(var i = 0; i< responses.length; i++){
     var holderName = standardName(responses[i][1]);
+    
     // if name matches
-    if(name == holderName && sDate == "" && checkNoStart(new Date(responses[i][0]))){
+    if((holderName.indexOf(name) > -1 || name.indexOf(holderName) > -1) && sDate == "0" && checkNoStart(new Date(responses[i][0]))){
+      
       nameData.push(responses[i]);
     }
-    else if(name == holderName && eDate == "" && checkNoEnd(new Date(responses[i][0]))){
+    else if((holderName.indexOf(name) > -1 || name.indexOf(holderName) > -1) && eDate == "0" && checkNoEnd(new Date(responses[i][0]))){
       nameData.push(responses[i]);
     }
-    else if(name == holderName && checkDateRange(new Date(responses[i][0]))){
+    else if((holderName.indexOf(name) > -1 || name.indexOf(holderName) > -1) && checkDateRange(new Date(responses[i][0]))){
       nameData.push(responses[i]);
     }
-    else if(name == holderName){
-      nameData.push(responses[i]); 
+    else if((holderName.indexOf(name) > -1 || name.indexOf(holderName) > -1)){
+      if(eDate == "0" && sDate =="0"){
+        nameData.push(responses[i]); 
+      }
     }
   }
+  
   return nameData;
 }
 
@@ -161,11 +190,11 @@ function findSubjectData(subject, data){
         //if subject found, in proper spot
         if(data[i][j].toString().indexOf(subject) >(-1) && j != 1 && j != 4 && j != 5){
           //if there is no start date, there is an end date, and the date is before the end
-          if(sDate == "" && edate !="" && checkNoStart(new Date(data[i][0]))){
+          if(sDate == "0" && eDate !="0" && checkNoStart(new Date(data[i][0]))){
             subjectData.push(data[i].concat()); 
-          }else if(eDate == "" && sDate != "" && checkNoEnd(new Date(data[i][0]))){
+          }else if(eDate == "0" && sDate != "0" && checkNoEnd(new Date(data[i][0]))){
             subjectData.push(data[i].concat()); 
-          }else if( sDate != "" && eDate != "" && checkDateRange(new Date(data[i][0]))){
+          }else if( sDate != "0" && eDate != "0" && checkDateRange(new Date(data[i][0]))){
             subjectData.push(data[i].concat());       
           }
           else{
